@@ -17,12 +17,12 @@
 
 ## 🖥️ Supported platforms
 
-| Distro | Architecture | Brave install method |
-|---|---|---|
+| Distro | Architecture | Brave install method | Works |
+|---|---|---|---|
 | Ubuntu / Debian | x86_64 | Official apt repo |
 | Fedora / RHEL | x86_64 | Official rpm repo |
 | Arch Linux / Manjaro | x86_64 | AUR (`brave-bin`) |
-| Raspberry Pi OS 64-bit | aarch64 | Snap |
+| Raspberry Pi OS 64-bit | aarch64 | Snap | ✔️ |
 
 ---
 

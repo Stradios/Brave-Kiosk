@@ -1,17 +1,13 @@
 #!/bin/bash
 # ============================================================
 #  Brave Kiosk — one-shot installer
-#  https://github.com/Stradios/Brave-Kiosk
+#  https://github.com/YOUR_GITHUB/brave-kiosk
 #
 #  Supports:
 #    • Ubuntu / Debian (x86_64)
 #    • Fedora / RHEL   (x86_64)
 #    • Arch Linux      (x86_64)
 #    • Raspberry Pi OS (aarch64)
-#
-#  Usage:
-#    curl -fsSL https://raw.githubusercontent.com/Stradios/Brave-Kiosk/main/install.sh \
-#      -o /tmp/install.sh && sudo bash /tmp/install.sh
 # ============================================================
 
 set -euo pipefail
@@ -50,8 +46,7 @@ fi
 is_debian() { [[ "$DISTRO_ID" == "debian" || "$DISTRO_ID" == "ubuntu" || "$DISTRO_ID" == "raspbian" || "$DISTRO_LIKE" == *"debian"* ]]; }
 is_fedora() { [[ "$DISTRO_ID" == "fedora" || "$DISTRO_ID" == "rhel"   || "$DISTRO_LIKE" == *"fedora"* || "$DISTRO_LIKE" == *"rhel"* ]]; }
 is_arch()   { [[ "$DISTRO_ID" == "arch"   || "$DISTRO_ID" == "manjaro" || "$DISTRO_LIKE" == *"arch"* ]]; }
-is_pi()     { [[ "$DISTRO_ID" == "raspbian" ]] || \
-              [[ -f /proc/device-tree/model ]] && grep -qi "raspberry" /proc/device-tree/model 2>/dev/null; }
+is_pi()     { [[ "$DISTRO_ID" == "raspbian" || ("$DISTRO_ID" == "debian" && "$ARCH_LABEL" == "aarch64") ]]; }
 
 # ── Banner ───────────────────────────────────────────────────
 clear
@@ -73,7 +68,7 @@ echo ""
 
 # ── Require root ─────────────────────────────────────────────
 if [[ $EUID -ne 0 ]]; then
-  die "Please run with sudo:\n  sudo bash /tmp/install.sh"
+  die "Please run with sudo:\n  sudo bash install.sh"
 fi
 
 # ── Confirm before proceeding ────────────────────────────────
@@ -98,7 +93,7 @@ while true; do
   elif [[ ! "$KIOSK_URL" =~ ^(https?://|file://) ]]; then
     warn "URL must start with https://, http://, or file://"
     read -rp "$(echo -e "  ${YELLOW}Use '$KIOSK_URL' anyway? [y/N]:${RESET} ")" USE_ANYWAY
-    [[ "${USE_ANYWAY:-N}" =~ ^[Yy]$ ]] && break
+    [[ "$USE_ANYWAY" =~ ^[Yy]$ ]] && break
   else
     break
   fi
@@ -123,16 +118,11 @@ success "Audio keybind set to: $KEYBIND"
 # ── 1. Install packages ──────────────────────────────────────
 header "Step 1/6 — Installing packages"
 
-if is_pi || [[ "$ARCH_LABEL" == "aarch64" && "$(is_debian && echo yes)" == "yes" ]]; then
+if is_pi && [[ "$ARCH_LABEL" == "aarch64" ]]; then
   info "Raspberry Pi OS (aarch64) detected — installing Brave via Snap"
   apt-get update -qq
   apt-get install -y snapd xorg openbox xinit unclutter \
     pulseaudio pulseaudio-utils pavucontrol
-  # snapd needs a restart of the socket on some Pi OS versions
-  systemctl enable --now snapd.socket 2>/dev/null || true
-  # Wait for snapd to be ready
-  info "Waiting for snapd to be ready..."
-  snap wait system seed.loaded 2>/dev/null || sleep 5
   snap install brave
   BRAVE_BIN="/snap/bin/brave"
 
@@ -194,14 +184,12 @@ systemctl daemon-reexec
 systemctl restart getty@tty1
 success "Autologin configured for: $KIOSK_USER"
 
-# ── 3. Raspberry Pi display & audio tweaks ───────────────────
-header "Step 3/6 — Platform-specific tweaks"
-
+# ── 3. Raspberry Pi display tweaks ───────────────────────────
 if is_pi; then
+  header "Step 3/6 — Raspberry Pi display & audio tweaks"
   BOOT_CONFIG="/boot/firmware/config.txt"
   [[ -f "$BOOT_CONFIG" ]] || BOOT_CONFIG="/boot/config.txt"
-
-  if ! grep -q "hdmi_force_hotplug" "$BOOT_CONFIG" 2>/dev/null; then
+  if ! grep -q "hdmi_force_hotplug" "$BOOT_CONFIG"; then
     cat >> "$BOOT_CONFIG" <<'EOF'
 
 # Kiosk display settings
@@ -213,11 +201,12 @@ EOF
   else
     warn "HDMI config already present in $BOOT_CONFIG — skipping"
   fi
-
+  # Force HDMI audio at firmware level
   if command -v raspi-config &>/dev/null; then
     raspi-config nonint do_audio 2 && success "HDMI audio forced via raspi-config"
   fi
 else
+  header "Step 3/6 — (Pi-only tweaks skipped)"
   info "Not a Raspberry Pi — skipping firmware config"
 fi
 
@@ -351,7 +340,7 @@ echo -e "    ${CYAN}$KIOSK_HOME/start-kiosk.sh${RESET}"
 echo -e "    ${CYAN}$KIOSK_HOME/.config/openbox/rc.xml${RESET}"
 echo -e "    ${CYAN}/etc/systemd/system/getty@tty1.service.d/autologin.conf${RESET}"
 echo ""
-echo -e "  ${YELLOW}To apply all changes, reboot now.${RESET}"
+echo -e "  ${YELLOW}To apply all changes, reboot now:${RESET}"
 echo ""
 read -rp "$(echo -e "  ${BOLD}Reboot now? [Y/n]:${RESET} ")" REBOOT
 REBOOT="${REBOOT:-Y}"
