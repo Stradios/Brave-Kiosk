@@ -17,20 +17,19 @@
 
 ## 🖥️ Supported platforms
 
-| Distro | Architecture | Brave install method | Works |
-|---|---|---|---|
+| Distro | Architecture | Brave install method |
+|---|---|---|
 | Ubuntu / Debian | x86_64 | Official apt repo |
 | Fedora / RHEL | x86_64 | Official rpm repo |
 | Arch Linux / Manjaro | x86_64 | AUR (`brave-bin`) |
-| Raspberry Pi OS 64-bit | aarch64 | Snap | ✔️ |
+| Raspberry Pi OS 64-bit | aarch64 | Snap |
 
 ---
 
 ## 🚀 Quick install
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Stradios/Brave-Kiosk/main/install.sh \
-  -o /tmp/install.sh && sudo bash /tmp/install.sh
+sudo bash <(curl -fsSL https://raw.githubusercontent.com/Stradios/Brave-Kiosk/main/install.sh)
 ```
 
 The installer will ask you two questions and then handle everything else:
@@ -153,8 +152,7 @@ pactl set-default-sink alsa_output.pci-0000_00_1f.3.hdmi-stereo
 **Kiosk URL needs to change**
 Re-run the installer — it regenerates `start-kiosk.sh` with your new URL without touching the system config:
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Stradios/Brave-Kiosk/main/install.sh \
-  -o /tmp/install.sh && sudo bash /tmp/install.sh
+sudo bash <(curl -fsSL https://raw.githubusercontent.com/Stradios/Brave-Kiosk/main/install.sh)
 ```
 
 ---
