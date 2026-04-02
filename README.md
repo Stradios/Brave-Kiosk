@@ -33,10 +33,13 @@ curl -fsSL https://raw.githubusercontent.com/Stradios/Brave-Kiosk/main/install.s
   -o /tmp/install.sh && sudo bash /tmp/install.sh
 ```
 
-The installer will ask you two questions and then handle everything else:
+> **Note:** The `sudo bash <(curl ...)` process substitution form does **not** work on Raspberry Pi OS — always use the download-then-run form above. It works on all supported platforms.
+
+The installer will ask three questions and then handle everything else:
 
 1. **Kiosk URL** — the website to display on boot (e.g. `https://your-company.no`)
 2. **Audio keybind** — keyboard shortcut to open the PulseAudio mixer (default: `Ctrl+Alt+A`)
+3. **Display lockdown** — whether to disable the internal screen and force an external display (recommended for laptop hardware)
 
 After answering, it installs all packages, configures autologin, writes the start script, and offers to reboot immediately.
 
@@ -67,6 +70,34 @@ After answering, it installs all packages, configures autologin, writes the star
 ```
 
 > The installer detects your username automatically using `$(whoami)` — you never need to edit a username placeholder manually.
+
+---
+
+## 🖥️ Display output lockdown
+
+The installer offers an optional **external-display-only** mode, designed to prevent the machine from being casually used as a regular laptop.
+
+When enabled, the start script does four things:
+
+**At the logind level (system-wide, before X even starts):**
+- Closing the laptop lid does nothing — no suspend, no output switch
+- The physical power button is ignored
+
+**At the X session level (inside `start-kiosk.sh`):**
+- Scans connected outputs via `xrandr` at boot
+- If an external display (HDMI/DisplayPort) is found, it is set as the primary output and the internal screen (eDP/LVDS) is turned off
+- If no external display is detected, the script waits and retries every 5 seconds for up to 60 seconds before falling back to whatever is connected
+
+```
+Scanning for external display...
+No external display yet — retrying in 5s... (5/60s)
+External display found: HDMI-1
+Internal display (eDP-1) disabled
+```
+
+The 60-second wait means the kiosk will sit at a black internal screen on boot until a display is plugged in — a clear signal that something is wrong with the setup rather than silently running on the laptop screen.
+
+> **Choosing not to enable lockdown** is fine too — the installer asks. On a Raspberry Pi or a dedicated mini-PC there is no internal screen to worry about.
 
 ---
 
