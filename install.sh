@@ -1,7 +1,7 @@
 #!/bin/bash
 # ============================================================
-#  Brave Kiosk — one-shot installer
-#  https://github.com/YOUR_GITHUB/brave-kiosk
+#  v0.01 Brave Kiosk — one-shot installer
+#  https://github.com/Stradios/Brave-Kiosk
 #
 #  Supports:
 #    • Ubuntu / Debian (x86_64)
