@@ -1,5 +1,6 @@
 
 # 🦁 Brave Kiosk
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/M8K423K344)
 
 > One-command installer that turns any 64-bit Linux machine or Raspberry Pi into a locked-down, auto-booting browser kiosk running [Brave](https://brave.com).
 
